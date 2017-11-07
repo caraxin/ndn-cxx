@@ -36,6 +36,8 @@ class Data;
  *  @brief default value for InterestLifetime
  */
 const time::milliseconds DEFAULT_INTEREST_LIFETIME = time::milliseconds(4000);
+const uint32_t DEFAULT_GEOTAG  = 100000000;
+const uint32_t DEFAULT_LASTGEO = 100000000;
 
 /** @brief represents an Interest packet
  */
@@ -73,6 +75,8 @@ public:
    *           using `make_shared`. Otherwise, .shared_from_this() will throw an exception.
    */
   Interest(const Name& name, const time::milliseconds& interestLifetime);
+
+  Interest(const Name& name, const uint32_t& geoTag, const uint32_t& lastGeo);
 
   /** @brief Create from wire encoding
    *  @warning In certain contexts that use Interest::shared_from_this(), Interest must be created
@@ -239,6 +243,32 @@ public: // Name and guiders
     return *this;
   }
 
+  const uint32_t&
+  getGeoTag() const
+  {
+    return m_geoTag;
+  }
+
+  Interest&
+  setGeoTag(const uint32_t& geoTag) {
+    m_geoTag = geoTag;
+    m_wire.reset();
+    return *this;
+  }
+
+  const uint32_t&
+  getLastGeo() const
+  {
+    return m_lastGeo;
+  }
+
+  Interest&
+  setLastGeo(const uint32_t& lastGeo) {
+    m_lastGeo = lastGeo;
+    m_wire.reset();
+    return *this;
+  }
+
   /** @brief Check if Nonce set
    */
   bool
@@ -380,6 +410,29 @@ public: // Selectors
     return *this;
   }
 
+  /**
+   * @brief Get content Block
+   *
+   * To access content value, one can use value()/value_size() or
+   * value_begin()/value_end() methods of the Block class
+   */
+  /*
+  const Block&
+  getContent() const;
+*/
+  /**
+   * @brief Set the content from the buffer (buffer will be copied)
+   *
+   * @param buffer Pointer to first byte of the buffer
+   * @param bufferSize Size of the buffer
+   *
+   * @return This Data so that you can chain calls to update values.
+   */
+  /*
+  Interest&
+  setContent(const uint8_t* buffer, size_t bufferSize);
+  */
+  
 public: // EqualityComparable concept
   bool
   operator==(const Interest& other) const
@@ -397,11 +450,14 @@ private:
   Name m_name;
   Selectors m_selectors;
   mutable Block m_nonce;
+  //mutable Block m_content;
   time::milliseconds m_interestLifetime;
 
   mutable Block m_link;
   mutable shared_ptr<Link> m_linkCached;
   size_t m_selectedDelegationIndex;
+  uint32_t m_geoTag;
+  uint32_t m_lastGeo;
   mutable Block m_wire;
 };
 

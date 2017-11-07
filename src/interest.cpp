@@ -36,6 +36,7 @@ static_assert(std::is_base_of<tlv::Error, Interest::Error>::value,
 Interest::Interest()
   : m_interestLifetime(time::milliseconds::min())
   , m_selectedDelegationIndex(INVALID_SELECTED_DELEGATION_INDEX)
+  , m_geoTag(DEFAULT_GEOTAG)
 {
 }
 
@@ -43,6 +44,7 @@ Interest::Interest(const Name& name)
   : m_name(name)
   , m_interestLifetime(time::milliseconds::min())
   , m_selectedDelegationIndex(INVALID_SELECTED_DELEGATION_INDEX)
+  , m_geoTag(DEFAULT_GEOTAG)
 {
 }
 
@@ -50,6 +52,16 @@ Interest::Interest(const Name& name, const time::milliseconds& interestLifetime)
   : m_name(name)
   , m_interestLifetime(interestLifetime)
   , m_selectedDelegationIndex(INVALID_SELECTED_DELEGATION_INDEX)
+  , m_geoTag(DEFAULT_GEOTAG)
+{
+}
+
+Interest::Interest(const Name& name, const uint32_t& geoTag, const uint32_t& lastGeo)
+  : m_name(name)
+  , m_interestLifetime(time::milliseconds::min())
+  , m_selectedDelegationIndex(INVALID_SELECTED_DELEGATION_INDEX)
+  , m_geoTag(geoTag)
+  , m_lastGeo(lastGeo)
 {
 }
 
@@ -100,6 +112,27 @@ Interest::refreshNonce()
 
   setNonce(newNonce);
 }
+
+/*
+const Block&
+Interest::getContent() const
+{
+  if (m_content.empty())
+    m_content = makeEmptyBlock(tlv::Content);
+
+  if (!m_content.hasWire())
+    m_content.encode();
+  return m_content;
+}
+
+Interest&
+Interest::setContent(const uint8_t* content, size_t contentLength)
+{
+  m_content = makeBinaryBlock(tlv::Content, content, contentLength);
+  m_wire.reset();
+  return *this;
+}
+*/
 
 bool
 Interest::matchesName(const Name& name) const
@@ -225,8 +258,28 @@ Interest::wireEncode(EncodingImpl<TAG>& encoder) const
   //                InterestLifetime?
   //                Link?
   //                SelectedDelegation?
+  //                Geotag?
+  //                Lastgaeo?
+  //                Content?
 
   // (reverse encoding)
+  // Content
+  // totalLength += encoder.prependBlock(getContent());
+
+  if (getLastGeo() >= 0 &&
+      getLastGeo() < DEFAULT_LASTGEO)
+    {
+      totalLength += prependNonNegativeIntegerBlock(encoder,
+                                                    tlv::LastGeo,
+                                                    m_lastGeo);
+    }
+  if (getGeoTag() >= 0 && 
+      getGeoTag() < DEFAULT_GEOTAG) 
+    {
+      totalLength += prependNonNegativeIntegerBlock(encoder,
+                                                    tlv::Geotag,
+                                                    m_geoTag);
+    }
 
   if (hasLink()) {
     if (hasSelectedDelegation()) {
@@ -304,6 +357,8 @@ Interest::wireDecode(const Block& wire)
   //                InterestLifetime?
   //                Link?
   //                SelectedDelegation?
+  //                Geotag?
+  //                Lastgeo?
 
   if (m_wire.type() != tlv::Interest)
     BOOST_THROW_EXCEPTION(Error("Unexpected TLV number when decoding Interest"));
@@ -358,6 +413,27 @@ Interest::wireDecode(const Block& wire)
   else {
     m_selectedDelegationIndex = INVALID_SELECTED_DELEGATION_INDEX;
   }
+
+  // geo-tag
+  val = m_wire.find(tlv::Geotag);
+  if (val != m_wire.elements_end()) {
+    m_geoTag = readNonNegativeInteger(*val);
+  }
+  else {
+    m_geoTag = DEFAULT_GEOTAG;
+  }
+
+  // last-geo
+  val = m_wire.find(tlv::LastGeo);
+  if (val != m_wire.elements_end()) {
+    m_lastGeo = readNonNegativeInteger(*val);
+  }
+  else {
+    m_lastGeo = DEFAULT_LASTGEO;
+  }
+
+  // Content
+  // m_content = m_wire.get(tlv::Content);
 }
 
 bool

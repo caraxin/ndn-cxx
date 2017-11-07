@@ -66,6 +66,8 @@ enum {
   Selectors     = 9,
   Nonce         = 10,
   // <Unassigned> = 11,
+  // new assigned geo-tag in interest packets
+  Geotag        = 11,
   InterestLifetime          = 12,
   MinSuffixComponents       = 13,
   MaxSuffixComponents       = 14,
@@ -87,6 +89,7 @@ enum {
   LinkPreference = 30,
   LinkDelegation = 31,
   SelectedDelegation = 32,
+  LastGeo        = 33,
 
   AppPrivateBlock1 = 128,
   AppPrivateBlock2 = 32767

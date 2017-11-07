@@ -274,6 +274,7 @@ Face::setInterestFilter(const InterestFilter& interestFilter,
                         const security::SigningInfo& signingInfo,
                         uint64_t flags)
 {
+  //std::cout << "register prefix = " << interestFilter.getPrefix().toUri() << std::endl;
   auto filter = make_shared<InterestFilterRecord>(interestFilter, onInterest);
 
   nfd::CommandOptions options;
